@@ -1,38 +1,54 @@
-# My Enggris — belajar English from A1 to C1
+# My Enggris — Gemini AI Tutor Edition
 
-Website belajar bahasa Inggris dalam Bahasa Indonesia, dapat di-hosting di Netlify tanpa server. Cocok sebagai platform belajar mandiri dan persiapan IELTS Academic / TOEFL iBT untuk studi lanjut.
+Website belajar bahasa Inggris A1–C1 untuk penutur Indonesia, dengan kamus anatomi dan gambar, percakapan keseharian, grammar, latihan acak, dan IELTS Academic / TOEFL iBT preparation.
 
-## Yang tersedia
+## AI Tutor berbasis Gemini
 
-- 60 modul A1–C1 (12 setiap level) dengan penjelasan dan kuis.
-- Setiap percobaan modul memakai paket latihan 6 soal (atau sebanyak ketersediaan bank), dengan pengacakan opsi dan pilihan jenis soal berbasis grammar, contoh, dan terjemahan. Pertanyaan dapat terulang jika bank terbatas; ini bukan AI yang membuat pertanyaan tanpa batas.
-- Body Anatomy: **120 entri** tubuh dari kepala hingga ujung kaki dan beberapa organ internal, terjemahan Bahasa Indonesia, tombol audio pronunciation sintetis, notasi IPA untuk sebagian kata, gambar depan/belakang dengan 25 titik interaktif.
-- Daily Conversation: **18 situasi**, 72 kalimat dialog berbahasa Inggris beserta terjemahan dan audio, dari bangun hingga tidur malam, menu checklist untuk yang sudah dilatih.
-- Reading, Listening, Speaking, Writing, flashcards, learning planner, jurnal, mini mock dan tautan latihan tes resmi.
-- Ekspor/impor backup JSON, penyimpanan lokal browser. Otomatis mengimpor progres dari `ruang-english-s2-v1` di browser yang sama ketika My Enggris pertama kali dipakai.
+Lima mode yang tetap tersedia:
+- **Conversation** — dialog dengan koreksi dan pertanyaan lanjutan.
+- **Grammar** — koreksi kalimat dan penjelasan dalam bahasa Indonesia.
+- **Writing** — umpan balik dan saran revisi tulisan (bukan band IELTS resmi).
+- **Speaking** — transkripsi mikrofon berbasis dukungan browser, lalu penilaian grammar/vocabulary/isi teks. **Bukan penilaian aksen atau kualitas pronunciation.**
+- **Adaptive Quiz** — satu soal baru per permintaan yang memprioritaskan kelemahan yang tercatat. Soal bisa saja mirip atau berulang.
 
-## Instalasi Netlify
+Antarmuka AI Tutor tetap memanggil `/api/tutor`, tetapi kini Netlify Function `netlify/functions/tutor.mjs` terhubung ke **Gemini generateContent REST API**. Tanpa dependency npm tambahan.
 
-1. Ekstrak ZIP ini.
-2. Buka https://app.netlify.com/drop
-3. Seret folder `my-enggris-netlify` yang memuat `index.html`, atau unggah ZIP melalui proses deploy manual yang mendukungnya.
-4. Website dapat langsung dipakai tanpa instalasi database atau `npm`.
+## Cara deploy ke Netlify
 
-## Keterbatasan
+1. Extract ZIP, lalu unggah seluruh isi folder ke repository GitHub (atau repository Git lain).
+2. Di Netlify, pilih **Add new project > Import an existing project** dan hubungkan repository tersebut.
+3. Konfigurasi publish directory `.` dan functions directory `netlify/functions` (sudah diset di `netlify.toml`). Build command boleh dikosongkan.
+4. Di Netlify > **Project configuration > Environment variables**, tambahkan:
+   - `GEMINI_API_KEY` = API key **baru** dari https://aistudio.google.com/api-keys (scope harus mencakup **Functions**).
+   - `GEMINI_MODEL` = `gemini-2.5-flash-lite` (opsional; default demikian). Alternatif dalam kode: `gemini-2.5-flash`.
+5. Lakukan deploy/redeploy, kemudian buka My Enggris > **AI English Tutor**.
+6. Pilih mode Grammar, masukkan `She go to school every day.` dan tekan **Kirim ke AI Tutor**.
 
-- Data progres hanya disimpan di browser, bukan sinkron antarperangkat. Backup berkala lewat Data & Pengaturan.
-- Tombol pronunciation menggunakan Web Speech API (speechSynthesis), memerlukan browser/suara perangkat yang mendukung. Kualitas aksen bergantung perangkat. IPA tidak tersedia untuk setiap entri.
-- Ilustrasi tubuh merupakan gambar edukasi, bukan diagram anatomi klinis dan tidak memperlihatkan organ internal.
-- Soal latihan bervariasi dari bank lokal tetapi tidak tak terbatas. Beberapa soal pemahaman berjenis penerjemahan, tidak selalu menguji tata bahasa sesuai modul secara mendalam.
-- Mini mock bukan simulasi penuh resmi atau prediksi skor IELTS/TOEFL. Tidak memberikan koreksi speaking/writing tervalidasi. Silakan gunakan sumber resmi tes untuk simulasi.
+**Jangan simpan API key di dalam ZIP, HTML, JavaScript frontend, `netlify.toml`, atau Git.** Key yang pernah diposting ke percakapan atau tempat publik sebaiknya dicabut dan diganti sebelum digunakan.
 
-## Struktur
+### Bila sebelumnya situs diunggah dengan Netlify Drop
 
-- `index.html`: halaman utama dan navigasi.
-- `style.css`: tata letak responsif.
-- `app.js`: mesin aplikasi, kuis, pembelajaran dan progres.
-- `my-enggris-data.js`: anatomi dan aktivitas harian.
-- `anatomy.webp`: ilustrasi tubuh tampak depan dan belakang.
-- `lessons-a1.js` / `advanced.js`: modul dan bank soal asli.
+Mengunggah folder statis tidak otomatis menjamin bundling Netlify Functions. Gunakan deploy berbasis Git atau Netlify CLI agar fungsi backend turut terpasang. Ini penting karena AI Tutor tidak bisa aktif hanya dengan `index.html` dan `GEMINI_API_KEY`.
 
-My Enggris adalah produk latihan belajar mandiri independen dan tidak berafiliasi dengan IELTS atau ETS.
+## Cara kerja dan batasannya
+
+- Website mengirim data tutor ke Netlify Function, lalu function menghubungi Gemini menggunakan secret key server-side.
+- Progres, chat, dan kategori kesalahan tersimpan secara lokal di browser; belum otomatis sinkron antardevice.
+- Gemini API menyediakan kuota gratis pada sejumlah model/project, tetapi **kuota dan kelayakan dapat berubah**. Bila free tier habis, AI Tutor akan menampilkan informasi kuota dan fitur non-AI masih berfungsi.
+- Belum tersedia autentikasi dan pembatasan kuota server-side. **Jangan publikasikan endpoint untuk penggunaan luas tanpa kontrol akses dan rate limit.**
+- Teks yang dikirim diproses Google dan tunduk pada ketentuan data Gemini Free Tier. Jangan mengirim informasi pribadi/sensitif.
+- Hasil AI bukan skor sertifikasi atau penilaian pronunciation resmi.
+
+## Struktur penting
+
+- `index.html`, `app.js`, `style.css` — tampilan situs.
+- `ai-tutor.js`, `ai-tutor.css` — antarmuka dan logika AI Tutor yang sudah kompatibel.
+- `netlify/functions/tutor.mjs` — **Gemini API backend** (pengganti integrasi OpenAI).
+- `netlify.toml` — konfigurasi Netlify.
+- `lessons-a1.js`, `advanced.js`, `my-enggris-data.js`, `anatomy.webp` — materi, latihan, dan gambar.
+
+Sumber resmi:
+- Gemini API: https://ai.google.dev/gemini-api/docs/text-generation
+- Google AI Studio: https://aistudio.google.com/api-keys
+- Netlify Functions: https://docs.netlify.com/build/functions/get-started/
+- Netlify environment variables: https://docs.netlify.com/build/functions/environment-variables/
