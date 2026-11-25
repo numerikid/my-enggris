@@ -23,9 +23,9 @@ export default async (request) => {
   const key = env('GEMINI_API_KEY');
   if (!key) return json({error: 'Gemini belum aktif. Tambahkan GEMINI_API_KEY pada Netlify Environment Variables (scope Functions), lalu deploy ulang.'}, 503);
   // Model names are fixed or explicitly allowed to avoid arbitrary URL destinations.
-  const availableModels = new Set(['gemini-2.5-flash-lite', 'gemini-2.5-flash']);
-  const configured = env('GEMINI_MODEL') || 'gemini-2.5-flash-lite';
-  if (!availableModels.has(configured)) return json({ error: 'GEMINI_MODEL tidak didukung. Gunakan gemini-2.5-flash-lite atau gemini-2.5-flash.' }, 503);
+  const availableModels = new Set(['gemini-3.1-flash-lite', 'gemini-3.5-flash-lite']);
+  const configured = (env('GEMINI_MODEL') || 'gemini-3.1-flash-lite').trim();
+  if (!availableModels.has(configured)) return json({ error: 'GEMINI_MODEL tidak didukung. Gunakan gemini-3.1-flash-lite atau gemini-3.5-flash-lite.' }, 503);
   let body;
   try {
     if (Number(request.headers.get('content-length') || 0) > 30000) return json({error:'Permintaan terlalu panjang.'},413);
@@ -64,7 +64,7 @@ export default async (request) => {
       const status = response.status;
       if (status === 429) return json({error:'Kuota Gemini tercapai. Coba lagi nanti atau cek batas free tier Google AI Studio.'},429);
       if (status === 400 || status === 403 || status === 401) return json({error:'Gemini menolak permintaan. Periksa API key, izin project, dan model di Google AI Studio.'},502);
-      if (status === 404) return json({error:'Model Gemini tidak tersedia untuk project ini. Periksa GEMINI_MODEL pada Netlify.'},502);
+      if (status === 404) return json({error:'Model Gemini tidak tersedia untuk project/API key ini (HTTP 404). Coba GEMINI_MODEL=gemini-3.1-flash-lite dan redeploy; periksa akses model di AI Studio.'},502);
       return json({error:`Layanan Gemini sementara bermasalah (HTTP ${status}).`},502);
     }
     const result = await response.json();
@@ -98,4 +98,3 @@ export default async (request) => {
 
 // Access through /api/tutor, as used by the existing browser code.
 export const config = {path:'/api/tutor'};
-
